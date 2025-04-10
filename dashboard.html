@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Image Gallery App</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo">Image Gallery App</div>
+            <ul class="nav-links" id="nav-links">
+                <li><a href="dashboard.html" class="active">Dashboard</a></li>
+                <li><a href="gallery.html">Gallery</a></li>
+                <li><a href="posts.html">Posts</a></li>
+                <li><a href="profile.html">Profile</a></li>
+                <li><a href="#" id="logout-btn">Logout</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="dashboard-container">
+            <h1>Welcome, <span id="user-name">User</span>!</h1>
+            
+            <div class="dashboard-summary">
+                <div class="summary-card">
+                    <h2>Your Gallery</h2>
+                    <p>You have <span id="image-count">0</span> images</p>
+                    <a href="gallery.html" class="btn secondary">View Gallery</a>
+                </div>
+                
+                <div class="summary-card">
+                    <h2>Your Posts</h2>
+                    <p>You have <span id="post-count">0</span> posts</p>
+                    <a href="posts.html" class="btn secondary">View Posts</a>
+                </div>
+                
+                <div class="summary-card">
+                    <h2>Profile</h2>
+                    <p>Manage your account settings</p>
+                    <a href="profile.html" class="btn secondary">Edit Profile</a>
+                </div>
+            </div>
+            
+            <div class="recent-activity">
+                <h2>Recent Activity</h2>
+                <div class="recent-images">
+                    <h3>Recent Images</h3>
+                    <div class="image-grid" id="recent-images-grid">
+                        <p id="loading-images">Loading recent images...</p>
+                    </div>
+                </div>
+                
+                <div class="recent-posts">
+                    <h3>Recent Posts</h3>
+                    <div class="recent-posts-list" id="recent-posts-list">
+                        <p id="loading-posts">Loading recent posts...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2023 Image Gallery App. All rights reserved.</p>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        // Dashboard initialization
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Check if user is authenticated
+            const isAuthenticated = await checkAuthentication();
+            
+            if (!isAuthenticated) {
+                return;
+            }
+            
+            // Get current user
+            const user = getCurrentUser();
+            
+            // Display user name
+            const userNameElement = document.getElementById('user-name');
+            if (userNameElement && user) {
+                // Fetch user profile from database
+                const { data: profile, error } = await window.supabaseClient
+                    .from('profiles')
+                    .select('username, full_name')
+                    .eq('id', user.id)
+                    .single();
+                
+                if (profile) {
+                    userNameElement.textContent = profile.full_name || profile.username;
+                }
+            }
+            
+            // Fetch image count
+            const { count: imageCount, error: imageError } = await window.supabaseClient
+                .from('images')
+                .select('id', { count: 'exact', head: true })
+                .eq('user_id', user.id);
+            
+            if (!imageError) {
+                document.getElementById('image-count').textContent = imageCount;
+            }
+            
+            // Fetch post count
+            const { count: postCount, error: postError } = await window.supabaseClient
+                .from('posts')
+                .select('id', { count: 'exact', head: true })
+                .eq('user_id', user.id);
+            
+            if (!postError) {
+                document.getElementById('post-count').textContent = postCount;
+            }
+            
+            // Load recent images
+            loadRecentImages(user.id);
+            
+            // Load recent posts
+            loadRecentPosts(user.id);
+        });
+        
+        // Function to load recent images
+        async function loadRecentImages(userId) {
+            const recentImagesGrid = document.getElementById('recent-images-grid');
+            const loadingMessage = document.getElementById('loading-images');
+            
+            try {
+                // Fetch user's recent images from Supabase - fixed the order method placement
+                const { data: images, error } = await window.supabaseClient
+                    .from('images')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .order('created_at', { ascending: false })
+                    .limit(4);
+                
+                if (error) {
+                    throw error;
+                }
+                
+                // Clear loading message
+                if (loadingMessage) {
+                    loadingMessage.remove();
+                }
+                
+                // Display images
+                if (images && images.length > 0) {
+                    images.forEach(image => {
+                        const imageElement = document.createElement('div');
+                        imageElement.className = 'image-item';
+                        
+                        imageElement.innerHTML = `
+                            <img src="${image.url}" alt="${image.title}">
+                            <div class="image-title">${image.title}</div>
+                        `;
+                        
+                        recentImagesGrid.appendChild(imageElement);
+                    });
+                } else {
+                    recentImagesGrid.innerHTML = '<p>No images found. Upload your first image!</p>';
+                }
+                
+            } catch (error) {
+                console.error('Error loading recent images:', error);
+                recentImagesGrid.innerHTML = '<p>Error loading images. Please try again later.</p>';
+            }
+        }
+        
+        // Function to load recent posts
+        async function loadRecentPosts(userId) {
+            const recentPostsList = document.getElementById('recent-posts-list');
+            const loadingMessage = document.getElementById('loading-posts');
+            
+            try {
+                // Fetch user's recent posts from Supabase
+                const { data: posts, error } = await window.supabaseClient
+                    .from('posts')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .order('created_at', { ascending: false })
+                    .limit(3);
+                
+                if (error) {
+                    throw error;
+                }
+                
+                // Clear loading message
+                if (loadingMessage) {
+                    loadingMessage.remove();
+                }
+                
+                // Display posts
+                if (posts && posts.length > 0) {
+                    posts.forEach(post => {
+                        const postElement = document.createElement('div');
+                        postElement.className = 'recent-post-item';
+                        
+                        // Format date
+                        const createdAt = new Date(post.created_at);
+                        const formattedDate = createdAt.toLocaleDateString();
+                        
+                        // Vulnerable to XSS - directly inserting user input
+                        postElement.innerHTML = `
+                            <div class="recent-post-content">${post.content}</div>
+                            <div class="recent-post-meta">Posted on ${formattedDate}</div>
+                        `;
+                        
+                        recentPostsList.appendChild(postElement);
+                    });
+                } else {
+                    recentPostsList.innerHTML = '<p>No posts found. Create your first post!</p>';
+                }
+                
+            } catch (error) {
+                console.error('Error loading recent posts:', error);
+                recentPostsList.innerHTML = '<p>Error loading posts. Please try again later.</p>';
+            }
+        }
+    </script>
+</body>
+</html>

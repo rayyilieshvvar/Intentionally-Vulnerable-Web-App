@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Assessment - Image Gallery App</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo">Image Gallery App</div>
+            <ul class="nav-links" id="nav-links">
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="gallery.html">Gallery</a></li>
+                <li><a href="posts.html">Posts</a></li>
+                <li><a href="profile.html">Profile</a></li>
+                <li><a href="security.html" class="active">Security</a></li>
+                <li><a href="#" id="logout-btn">Logout</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="security-container">
+            <h1>Security Assessment</h1>
+            
+            <div class="security-intro">
+                <p>This page demonstrates common security vulnerabilities in the application and provides guidance on how to fix them. Use this for educational purposes only.</p>
+            </div>
+            
+            <div class="vulnerability-section">
+                <h2>1. Cross-Site Scripting (XSS)</h2>
+                <div class="vulnerability-description">
+                    <p>XSS vulnerabilities allow attackers to inject malicious scripts into web pages viewed by other users.</p>
+                    <h3>Example:</h3>
+                    <div class="code-example">
+                        <pre><code>// Vulnerable code
+imageContainer.innerHTML = `
+    &lt;img src="${image.url}" alt="${image.title}"&gt;
+    &lt;div class="image-title"&gt;${image.title}&lt;/div&gt;
+`;</code></pre>
+                    </div>
+                    <h3>Fix:</h3>
+                    <div class="code-example">
+                        <pre><code>// Fixed code
+const imgElement = document.createElement('img');
+imgElement.src = image.url;
+imgElement.alt = image.title;
+imageContainer.appendChild(imgElement);
+
+const titleDiv = document.createElement('div');
+titleDiv.className = 'image-title';
+titleDiv.textContent = image.title;
+imageContainer.appendChild(titleDiv);</code></pre>
+                    </div>
+                </div>
+                
+                <div class="vulnerability-demo">
+                    <h3>Demo:</h3>
+                    <p>Enter some text with script tags to see how it's rendered:</p>
+                    <div class="form-group">
+                        <input type="text" id="xss-input" placeholder="Try: <script>alert('XSS')</script>">
+                        <button onclick="renderUserInput()" class="btn primary">Render</button>
+                    </div>
+                    <div class="demo-result">
+                        <h4>Vulnerable Output:</h4>
+                        <div id="xss-vulnerable-output" class="output-box"></div>
+                        <h4>Safe Output:</h4>
+                        <div id="xss-safe-output" class="output-box"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="vulnerability-section">
+                <h2>2. Insecure Direct Object References (IDOR)</h2>
+                <div class="vulnerability-description">
+                    <p>IDOR vulnerabilities allow attackers to access resources belonging to other users by manipulating object references.</p>
+                    <h3>Example:</h3>
+                    <div class="code-example">
+                        <pre><code>// Vulnerable code
+async function getImage(imageId) {
+    const { data: image } = await supabase
+        .from('images')
+        .select('*')
+        .eq('id', imageId)
+        .single();
+    
+    return image;
+}</code></pre>
+                    </div>
+                    <h3>Fix:</h3>
+                    <div class="code-example">
+                        <pre><code>// Fixed code
+async function getImage(imageId, userId) {
+    const { data: image } = await supabase
+        .from('images')
+        .select('*')
+        .eq('id', imageId)
+        .eq('user_id', userId)
+        .single();
+    
+    return image;
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="vulnerability-section">
+                <h2>3. SQL Injection</h2>
+                <div class="vulnerability-description">
+                    <p>SQL injection vulnerabilities allow attackers to execute malicious SQL queries by manipulating user inputs.</p>
+                    <h3>Example:</h3>
+                    <div class="code-example">
+                        <pre><code>// Vulnerable code
+async function executeQuery(query) {
+    try {
+        const { data, error } = await supabase.rpc('execute_sql', { sql_query: query });
+        return { data, error };
+    } catch (error) {
+        console.error('Error executing query:', error);
+        return { error };
+    }
+}</code></pre>
+                    </div>
+                    <h3>Fix:</h3>
+                    <div class="code-example">
+                        <pre><code>// Fixed code
+// Use parameterized queries instead of raw SQL
+async function getUserImages(userId) {
+    const { data, error } = await supabase
+        .from('images')
+        .select('*')
+        .eq('user_id', userId);
+    
+    return { data, error };
+}</code></pre>
+                    </div>
+                </div>
+                
+                <div class="vulnerability-demo">
+                    <h3>Demo:</h3>
+                    <p>Enter a SQL query to see how it might be executed:</p>
+                    <div class="form-group">
+                        <input type="text" id="sql-input" placeholder="Try: SELECT * FROM users WHERE username = 'admin' OR 1=1">
+                        <button onclick="simulateSqlInjection()" class="btn primary">Execute</button>
+                    </div>
+                    <div class="demo-result">
+                        <h4>Vulnerable Result:</h4>
+                        <div id="sql-vulnerable-output" class="output-box"></div>
+                        <h4>Safe Result:</h4>
+                        <div id="sql-safe-output" class="output-box"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="vulnerability-section">
+                <h2>4. Insecure Authentication</h2>
+                <div class="vulnerability-description">
+                    <p>Insecure authentication vulnerabilities allow attackers to bypass authentication or gain unauthorized access.</p>
+                    <h3>Example:</h3>
+                    <div class="code-example">
+                        <pre><code>// Vulnerable code
+function isAuthenticated() {
+    return localStorage.getItem('user') !== null;
+}</code></pre>
+                    </div>
+                    <h3>Fix:</h3>
+                    <div class="code-example">
+                        <pre><code>// Fixed code
+async function isAuthenticated() {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session !== null;
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="vulnerability-section">
+                <h2>5. Sensitive Data Exposure</h2>
+                <div class="vulnerability-description">
+                    <p>Sensitive data exposure vulnerabilities allow attackers to access sensitive information that should be protected.</p>
+                    <h3>Example:</h3>
+                    <div class="code-example">
+                        <pre><code>// Vulnerable code
+// Storing API keys in client-side code
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
+
+// Storing sensitive data in localStorage
+localStorage.setItem('user', JSON.stringify(user));</code></pre>
+                    </div>
+                    <h3>Fix:</h3>
+                    <div class="code-example">
+                        <pre><code>// Fixed code
+// Use environment variables for API keys
+// Use secure HTTP-only cookies for session management
+// Implement proper authentication and authorization</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2023 Image Gallery App. All rights reserved.</p>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/security.js"></script>
+</body>
+</html>
