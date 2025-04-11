@@ -28,7 +28,12 @@ async function handleLogin(e) {
     const errorMessage = document.getElementById('error-message');
     
     try {
-        const { data, error } = await supabaseClient.auth.signInWithPassword({
+        // Make sure we're using window.supabaseClient
+        if (!window.supabaseClient) {
+            throw new Error('Supabase client not initialized');
+        }
+        
+        const { data, error } = await window.supabaseClient.auth.signInWithPassword({
             email: email,
             password: password
         });
