@@ -1,6 +1,6 @@
 {
   "name": "Intentionally-Vulnerable-Web-App",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Intentionally Vulnerable Web App",
   "scripts": {
     "build": "node build.js"
