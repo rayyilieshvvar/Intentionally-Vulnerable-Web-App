@@ -5,8 +5,14 @@ const path = require('path');
 const configPath = path.join(__dirname, 'js', 'config.js');
 let configContent = fs.readFileSync(configPath, 'utf8');
 
-// Replace the placeholder with the actual key from environment variable
-configContent = configContent.replace('__SUPABASE_KEY__', process.env.SUPABASE_KEY);
+// Replace the placeholders with the actual values from environment variables
+if (process.env.SUPABASE_URL) {
+  configContent = configContent.replace('YOUR_LOCAL_DEVELOPMENT_URL', process.env.SUPABASE_URL);
+}
+
+if (process.env.SUPABASE_KEY) {
+  configContent = configContent.replace('YOUR_LOCAL_DEVELOPMENT_KEY', process.env.SUPABASE_KEY);
+}
 
 // Write the updated content back
 fs.writeFileSync(configPath, configContent);
