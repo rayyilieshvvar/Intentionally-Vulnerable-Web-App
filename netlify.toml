@@ -1,9 +1,12 @@
 [build]
   publish = "."
+  command = ""
 
-[[plugins]]
-  package = "netlify-plugin-inline-functions-env"
-  
-  [plugins.inputs]
-  include = ["js/config.js"]
-  verbose = true
+[context.production.environment]
+  SUPABASE_URL = "NETLIFY_ENV_PLACEHOLDER"
+  SUPABASE_KEY = "NETLIFY_ENV_PLACEHOLDER"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
