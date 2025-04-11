@@ -1,0 +1,9 @@
+[build]
+  publish = "."
+
+[[plugins]]
+  package = "netlify-plugin-inline-functions-env"
+  
+  [plugins.inputs]
+  files = ["js/config.js"]
+  included_keys = ["SUPABASE_URL", "SUPABASE_KEY"]
