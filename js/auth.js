@@ -71,7 +71,8 @@ async function handleRegister(e) {
     const errorMessage = document.getElementById('error-message');
     
     try {
-        const { data, error } = await supabaseClient.auth.signUp({
+        // Use window.supabaseClient instead of supabaseClient
+        const { data, error } = await window.supabaseClient.auth.signUp({
             email: email,
             password: password,
             options: {
@@ -98,7 +99,7 @@ async function handleRegister(e) {
         }
         
         // Create user profile in the profiles table - using supabaseClient instead of supabase
-        const { error: profileError } = await supabaseClient
+        const { error: profileError } = await window.supabaseClient
             .from('profiles')
             .insert([
                 {
@@ -133,8 +134,8 @@ async function handleLogout(e) {
     e.preventDefault();
     
     try {
-        // Sign out from Supabase - using supabaseClient instead of supabase
-        await supabaseClient.auth.signOut();
+        // Use window.supabaseClient here
+        await window.supabaseClient.auth.signOut();
         
         // Remove user data from localStorage
         localStorage.removeItem('user');
@@ -150,8 +151,8 @@ async function handleLogout(e) {
 // Function to check if user is authenticated
 async function checkAuthentication() {
     try {
-        // Get session from Supabase - using supabaseClient instead of supabase
-        const { data: { session } } = await supabaseClient.auth.getSession();
+        // Use window.supabaseClient here
+        const { data: { session } } = await window.supabaseClient.auth.getSession();
         
         // If no session and on a protected page, redirect to login
         if (!session && isProtectedPage()) {
