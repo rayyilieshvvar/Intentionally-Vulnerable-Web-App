@@ -1,10 +1,6 @@
 [build]
   publish = "."
-  command = ""
-
-[context.production.environment]
-  SUPABASE_URL = "NETLIFY_ENV_PLACEHOLDER"
-  SUPABASE_KEY = "NETLIFY_ENV_PLACEHOLDER"
+  command = "npm install && npm run build"
 
 [[redirects]]
   from = "/*"

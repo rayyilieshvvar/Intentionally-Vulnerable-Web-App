@@ -1,0 +1,11 @@
+{
+  "name": "Intentionally-Vulnerable-Web-App",
+  "version": "1.0.0",
+  "description": "Intentionally Vulnerable Web App",
+  "scripts": {
+    "build": "node build.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.0.0"
+  }
+}
